@@ -1,0 +1,1249 @@
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #172033;
+  background: #f5f7fb;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #f5f7fb;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header {
+  height: 76px;
+
+  background: white;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 32px;
+
+  position: sticky;
+  top: 0;
+
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 44px;
+  height: 44px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef4ff;
+
+  font-size: 22px;
+}
+
+.brand h1 {
+  margin: 0;
+
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.brand p {
+  margin: 3px 0 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+.online-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+}
+
+
+/* =========================================================
+   CHAT CONTAINER
+========================================================= */
+
+.chat-container {
+  flex: 1;
+
+  width: 100%;
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  padding: 32px 24px;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+
+/* =========================================================
+   MESSAGE ROW
+========================================================= */
+
+.message-row {
+  display: flex;
+  align-items: flex-end;
+
+  gap: 10px;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+
+/* =========================================================
+   AVATARS
+========================================================= */
+
+.avatar {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+}
+
+.bot-avatar {
+  background: #eaf1ff;
+}
+
+.user-avatar {
+  background: #e9edf3;
+}
+
+
+/* =========================================================
+   MESSAGE CONTENT
+========================================================= */
+
+.message-content {
+  max-width: 70%;
+}
+
+.message-bubble {
+  padding: 13px 16px;
+
+  border-radius: 16px;
+
+  line-height: 1.5;
+
+  font-size: 15px;
+
+  white-space: pre-wrap;
+}
+
+
+/* BOT */
+
+.message-row.bot .message-bubble {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-bottom-left-radius: 5px;
+}
+
+
+/* USER */
+
+.message-row.user .message-bubble {
+  background: #2563eb;
+
+  color: white;
+
+  border-bottom-right-radius: 5px;
+}
+
+
+/* =========================================================
+   TYPING / LOADING
+========================================================= */
+
+.typing {
+  color: #6b7280;
+
+  font-style: italic;
+}
+
+
+/* =========================================================
+   IMAGE MESSAGE
+========================================================= */
+
+.image-message {
+  max-width: 320px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+}
+
+.uploaded-image {
+  display: block;
+
+  width: 100%;
+
+  max-height: 300px;
+
+  object-fit: cover;
+}
+
+.image-name {
+  padding: 8px 10px;
+
+  color: #6b7280;
+
+  font-size: 12px;
+
+  border-top: 1px solid #edf0f4;
+}
+
+
+/* =========================================================
+   DIAGNOSIS CARD
+========================================================= */
+
+.diagnosis-card {
+  width: min(100%, 500px);
+
+  background: white;
+
+  border: 1px solid #dfe3ea;
+
+  border-radius: 16px;
+
+  padding: 20px;
+
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================================
+   DIAGNOSIS HEADER
+========================================================= */
+
+.diagnosis-header {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding-bottom: 16px;
+
+  border-bottom: 1px solid #edf0f4;
+}
+
+.diagnosis-icon {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef4ff;
+
+  font-size: 20px;
+}
+
+.diagnosis-header h3 {
+  margin: 0;
+
+  font-size: 17px;
+}
+
+.diagnosis-header p {
+  margin: 3px 0 0;
+
+  color: #6b7280;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   DIAGNOSIS SECTIONS
+========================================================= */
+
+.diagnosis-section {
+  margin-top: 16px;
+}
+
+.diagnosis-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #6b7280;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+}
+
+.diagnosis-section p {
+  margin: 0;
+
+  color: #172033;
+
+  line-height: 1.5;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   SEVERITY
+========================================================= */
+
+.severity-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 14px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.4px;
+}
+
+
+/* HIGH */
+
+.severity-badge.high {
+  background: #fee2e2;
+
+  color: #b91c1c;
+}
+
+
+/* MEDIUM */
+
+.severity-badge.medium {
+  background: #fef3c7;
+
+  color: #92400e;
+}
+
+
+/* LOW */
+
+.severity-badge.low {
+  background: #dcfce7;
+
+  color: #166534;
+}
+
+
+/* UNKNOWN / OTHER */
+
+.severity-badge:not(.high):not(.medium):not(.low) {
+  background: #e5e7eb;
+
+  color: #374151;
+}
+
+
+/* =========================================================
+   INPUT AREA
+========================================================= */
+
+.input-area {
+  width: 100%;
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  padding: 0 24px 12px;
+}
+
+.input-wrapper {
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 7px 8px;
+
+  background: white;
+
+  border: 1px solid #dfe3ea;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================================
+   FILE INPUT
+========================================================= */
+
+.hidden-file-input {
+  display: none;
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.input-wrapper textarea {
+  flex: 1;
+
+  resize: none;
+
+  border: none;
+
+  outline: none;
+
+  background: transparent;
+
+  color: #172033;
+
+  font-size: 15px;
+
+  padding: 10px 4px;
+
+  max-height: 120px;
+}
+
+.input-wrapper textarea::placeholder {
+  color: #9ca3af;
+}
+
+
+/* =========================================================
+   ATTACHMENT BUTTON
+========================================================= */
+
+.attachment-button,
+.send-button {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-button {
+  background: transparent;
+
+  font-size: 18px;
+}
+
+.attachment-button:hover:not(:disabled) {
+  background: #f1f3f7;
+}
+
+
+/* =========================================================
+   SEND BUTTON
+========================================================= */
+
+.send-button {
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 18px;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.send-button:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   INPUT HINT
+========================================================= */
+
+.input-hint {
+  margin: 7px 0 0;
+
+  text-align: center;
+
+  color: #9ca3af;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   ACTION AREA
+========================================================= */
+
+.booking-area {
+  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+
+  padding: 8px 24px 24px;
+}
+
+
+/* =========================================================
+   DIAGNOSIS BUTTON
+========================================================= */
+
+.diagnosis-button {
+  border: none;
+
+  padding: 12px 22px;
+
+  border-radius: 10px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-weight: 600;
+
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    opacity 0.2s;
+}
+
+.diagnosis-button:hover:not(:disabled) {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}
+
+.diagnosis-button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   BOOKING BUTTON
+========================================================= */
+
+.booking-button {
+  border: none;
+
+  padding: 12px 22px;
+
+  border-radius: 10px;
+
+  background: #172033;
+
+  color: white;
+
+  font-weight: 600;
+
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.booking-button:hover:not(:disabled) {
+  background: #0f172a;
+
+  transform: translateY(-1px);
+}
+
+.booking-button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .header {
+    height: 68px;
+
+    padding: 0 16px;
+  }
+
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand h1 {
+    font-size: 17px;
+  }
+
+  .chat-container {
+    padding: 20px 14px;
+  }
+
+  .message-content {
+    max-width: 82%;
+  }
+
+  .input-area {
+    padding: 0 14px 10px;
+  }
+
+  .booking-area {
+    padding: 8px 14px 18px;
+  }
+
+  .diagnosis-button,
+  .booking-button {
+    width: 100%;
+  }
+
+  .diagnosis-card {
+    max-width: 100%;
+  }
+
+  .image-message {
+    max-width: 260px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 400px) {
+
+  .header {
+    padding: 0 12px;
+  }
+
+  .chat-container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .input-area {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .message-content {
+    max-width: 85%;
+  }
+
+  .message-bubble {
+    font-size: 14px;
+
+    padding: 11px 13px;
+  }
+
+}
+
+
+/* =========================================================
+   BOOKING MODAL
+========================================================= */
+
+.booking-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.55);
+
+  backdrop-filter: blur(4px);
+}
+
+
+/* =========================================================
+   BOOKING MODAL CARD
+========================================================= */
+
+.booking-modal {
+  width: min(100%, 520px);
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 24px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.2);
+
+  animation: bookingModalAppear 0.2s ease-out;
+}
+
+
+@keyframes bookingModalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.booking-modal-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  gap: 16px;
+
+  padding-bottom: 18px;
+
+  border-bottom: 1px solid #edf0f4;
+}
+
+
+.booking-modal-header h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 21px;
+
+  font-weight: 700;
+}
+
+
+.booking-modal-header p {
+  margin: 5px 0 0;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.booking-close-button {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #f3f4f6;
+
+  color: #4b5563;
+
+  font-size: 17px;
+
+  cursor: pointer;
+}
+
+
+.booking-close-button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+
+.booking-close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   BOOKING FORM
+========================================================= */
+
+.booking-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 16px;
+
+  margin-top: 20px;
+}
+
+
+.form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.form-group label {
+  color: #374151;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+
+.form-group input {
+  width: 100%;
+  height: 44px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dfe3ea;
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: white;
+
+  color: #172033;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+
+.form-group input::placeholder {
+  color: #9ca3af;
+}
+
+
+.form-group input:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+
+.form-group input:disabled {
+  background: #f8fafc;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   DATE + TIME
+========================================================= */
+
+.booking-row {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
+
+.booking-form-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 6px;
+
+  padding-top: 18px;
+
+  border-top: 1px solid #edf0f4;
+}
+
+
+.booking-cancel-button,
+.booking-submit-button {
+  min-height: 44px;
+
+  padding: 0 18px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.booking-cancel-button {
+  background: #f3f4f6;
+
+  color: #374151;
+}
+
+
+.booking-cancel-button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+
+.booking-submit-button {
+  background: #2563eb;
+
+  color: white;
+}
+
+
+.booking-submit-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+
+.booking-submit-button:disabled,
+.booking-cancel-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   BOOKING SUCCESS
+========================================================= */
+
+.booking-success {
+  text-align: center;
+
+  padding: 10px 4px 4px;
+}
+
+
+.booking-success-icon {
+  width: 64px;
+  height: 64px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #dcfce7;
+
+  color: #166534;
+
+  font-size: 30px;
+
+  font-weight: 800;
+}
+
+
+.booking-success h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 21px;
+}
+
+
+.booking-success > p {
+  margin: 8px auto 22px;
+
+  max-width: 360px;
+
+  color: #6b7280;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   BOOKING DETAILS
+========================================================= */
+
+.booking-details {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 12px;
+
+  overflow: hidden;
+
+  text-align: left;
+}
+
+
+.booking-detail {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 12px 14px;
+
+  border-bottom: 1px solid #edf0f4;
+}
+
+
+.booking-detail:last-child {
+  border-bottom: none;
+}
+
+
+.booking-detail span {
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+
+.booking-detail strong {
+  color: #172033;
+
+  font-size: 13px;
+
+  text-align: right;
+}
+
+
+.booking-status {
+  padding: 4px 9px;
+
+  border-radius: 20px;
+
+  background: #fef3c7;
+
+  color: #92400e !important;
+
+  font-size: 11px !important;
+}
+
+
+/* =========================================================
+   DONE BUTTON
+========================================================= */
+
+.booking-done-button {
+  width: 100%;
+
+  height: 44px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.booking-done-button:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================================
+   MOBILE BOOKING
+========================================================= */
+
+@media (max-width: 600px) {
+  .booking-modal-overlay {
+    align-items: flex-end;
+
+    padding: 10px;
+  }
+
+  .booking-modal {
+    width: 100%;
+
+    max-height: 92vh;
+
+    padding: 20px;
+
+    border-radius: 18px 18px 12px 12px;
+  }
+
+  .booking-row {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .booking-cancel-button,
+  .booking-submit-button {
+    width: 100%;
+  }
+}
