@@ -1,35 +1,20 @@
-﻿
-"""
-Rule-based vehicle diagnostic engine.
+﻿"""
+AI Car Mechanic - Diagnostic Engine
 
-The diagnostic engine uses the most recent relevant vehicle
-problem in the conversation so that an older problem does not
-override a newer problem.
+Rule-based diagnostic engine.
 
-Example:
-
-User:
-    My brakes are making a grinding noise.
-
-Later:
-
-User:
-    My engine is overheating and there is steam.
-
-The second message should produce an engine diagnosis rather
-than repeating the old brake diagnosis.
+Important:
+This does NOT claim to perform a definitive mechanical diagnosis.
+It identifies a likely problem area from the symptoms supplied
+by the user and recommends an appropriate inspection/action.
 """
 
 
 # =========================================================
-# HELPER FUNCTIONS
+# HELPERS
 # =========================================================
 
 def normalize_history(message_history):
-    """
-    Convert the message history into a clean list of strings.
-    """
-
     if not message_history:
         return []
 
@@ -40,596 +25,190 @@ def normalize_history(message_history):
     ]
 
 
-def get_latest_problem_context(message_history):
-    """
-    Identify the most recent major vehicle-system mentioned
-    by the user.
+def combined_text(message_history):
+    return " ".join(
+        normalize_history(message_history)
+    ).lower()
 
-    This prevents old problems from dominating a newer problem.
-    """
 
-    messages = normalize_history(message_history)
+def contains_any(text, phrases):
+    return any(
+        phrase in text
+        for phrase in phrases
+    )
 
-    if not messages:
-        return []
 
-    # Work backwards because the newest message is the most
-    # relevant message.
-
-    for index in range(len(messages) - 1, -1, -1):
-
-        message = messages[index].lower()
-
-        # -----------------------------------------------------
-        # Engine / overheating
-        # -----------------------------------------------------
-
-        if any(
-            keyword in message
-            for keyword in [
-                "engine",
-                "overheat",
-                "overheating",
-                "steam",
-                "coolant",
-                "smoke",
-                "losing power",
-                "loss of power",
-                "won't start",
-                "wont start",
-                "not start",
-            ]
-        ):
-            return messages[index:]
-
-        # -----------------------------------------------------
-        # Brake
-        # -----------------------------------------------------
-
-        if any(
-            keyword in message
-            for keyword in [
-                "brake",
-                "brakes",
-                "braking",
-                "brake pedal",
-            ]
-        ):
-            return messages[index:]
-
-        # -----------------------------------------------------
-        # Battery
-        # -----------------------------------------------------
-
-        if any(
-            keyword in message
-            for keyword in [
-                "battery",
-                "battery dead",
-                "clicking",
-                "dashboard lights dim",
-            ]
-        ):
-            return messages[index:]
-
-        # -----------------------------------------------------
-        # Tyre / wheel
-        # -----------------------------------------------------
-
-        if any(
-            keyword in message
-            for keyword in [
-                "tyre",
-                "tire",
-                "puncture",
-                "flat tyre",
-                "flat tire",
-            ]
-        ):
-            return messages[index:]
-
-        # -----------------------------------------------------
-        # Steering / suspension
-        # -----------------------------------------------------
-
-        if any(
-            keyword in message
-            for keyword in [
-                "steering",
-                "suspension",
-                "shock absorber",
-            ]
-        ):
-            return messages[index:]
-
-    # If no specific subsystem was identified, use the
-    # complete history.
-    return messages
+def result(
+    problem,
+    explanation,
+    severity,
+    recommendation,
+):
+    return {
+        "problem": problem,
+        "explanation": explanation,
+        "severity": severity,
+        "recommendation": recommendation,
+    }
 
 
 # =========================================================
 # BRAKE DIAGNOSIS
 # =========================================================
 
-def diagnose_brake_issue(message_history):
+def diagnose_brake_issue(messages):
 
-    text = " ".join(message_history).lower()
+    text = combined_text(messages)
 
-    # -----------------------------------------------------
-    # Grinding / scraping
-    # -----------------------------------------------------
-
-    if any(
-        word in text
-        for word in [
+    # Grinding
+    if contains_any(
+        text,
+        [
             "grinding",
             "grind",
             "scraping",
-            "scrape",
             "metal on metal",
             "metal-to-metal",
-        ]
+        ],
     ):
-        return {
-            "problem": "Possible severely worn brake pads",
-            "explanation": (
-                "A grinding or scraping sound during braking can "
-                "occur when brake pad material is severely worn "
-                "and braking components begin contacting each other."
+        return result(
+            "Possible severely worn brake pads",
+            (
+                "Grinding or scraping during braking can occur "
+                "when brake-pad material is severely worn or "
+                "when brake components are contacting each other."
             ),
-            "severity": "high",
-            "recommendation": (
-                "Avoid unnecessary driving and have the braking "
-                "system inspected as soon as possible. Continued "
-                "driving may damage the brake rotors and reduce "
-                "braking performance."
+            "high",
+            (
+                "Avoid unnecessary driving and have the brake "
+                "system inspected as soon as possible."
             ),
-        }
+        )
 
-    # -----------------------------------------------------
-    # Soft / spongy pedal
-    # -----------------------------------------------------
-
-    if any(
-        phrase in text
-        for phrase in [
+    # Soft/spongy pedal
+    if contains_any(
+        text,
+        [
             "soft pedal",
             "pedal is soft",
             "pedal feels soft",
-            "brake pedal is soft",
-            "brake pedal feels soft",
             "spongy pedal",
             "pedal is spongy",
             "pedal feels spongy",
-            "brake pedal is spongy",
-            "brake pedal feels spongy",
-        ]
+        ],
     ):
-        return {
-            "problem": "Possible brake hydraulic system issue",
-            "explanation": (
+        return result(
+            "Possible brake hydraulic or brake-fluid issue",
+            (
                 "A soft or spongy brake pedal can be associated "
                 "with air in the brake lines, low brake fluid, "
-                "a hydraulic system problem, or other brake-system faults."
+                "a hydraulic fault, or another brake-system problem."
             ),
-            "severity": "high",
-            "recommendation": (
-                "Have the brake system inspected promptly. "
+            "high",
+            (
+                "Have the braking system inspected promptly. "
                 "Avoid driving if braking performance is reduced."
             ),
-        }
+        )
 
-    # -----------------------------------------------------
     # Hard pedal
-    # -----------------------------------------------------
-
-    if any(
-        phrase in text
-        for phrase in [
+    if contains_any(
+        text,
+        [
             "hard pedal",
             "pedal is hard",
             "pedal feels hard",
-            "brake pedal is hard",
-            "brake pedal feels hard",
-            "hard",
-        ]
+        ],
     ):
-        return {
-            "problem": "Possible brake assist or vacuum-system issue",
-            "explanation": (
+        return result(
+            "Possible brake-assist or vacuum-system issue",
+            (
                 "An unusually hard brake pedal can be associated "
-                "with a brake booster, vacuum supply, or brake-assist "
-                "problem."
+                "with a brake booster, vacuum supply, or brake-assist problem."
             ),
-            "severity": "high",
-            "recommendation": (
+            "high",
+            (
                 "Have the braking system inspected promptly. "
-                "If the pedal requires significantly more force "
-                "than usual, avoid unnecessary driving."
+                "Avoid unnecessary driving if significantly more "
+                "force is required to stop the vehicle."
             ),
-        }
+        )
 
-    # -----------------------------------------------------
-    # Squealing / squeaking
-    # -----------------------------------------------------
-
-    if any(
-        word in text
-        for word in [
-            "squeal",
+    # Squealing
+    if contains_any(
+        text,
+        [
             "squealing",
-            "squeak",
+            "squeal",
             "squeaking",
+            "squeak",
             "screech",
-            "screeching",
-        ]
+        ],
     ):
-        return {
-            "problem": "Brake pad or brake hardware noise",
-            "explanation": (
-                "A squealing or squeaking noise during braking "
-                "can be caused by brake pad wear, brake pad vibration, "
+        return result(
+            "Possible brake pad or brake hardware noise",
+            (
+                "Squealing or squeaking during braking can be "
+                "associated with brake-pad wear, brake-pad vibration, "
                 "brake dust, moisture, or brake hardware."
             ),
-            "severity": "medium",
-            "recommendation": (
+            "medium",
+            (
                 "Have the brake pads, rotors, and brake hardware "
-                "inspected. If the pads are significantly worn, "
-                "they may need replacement."
+                "inspected."
             ),
-        }
+        )
 
-    # -----------------------------------------------------
-    # Vibration
-    # -----------------------------------------------------
-
-    if any(
-        word in text
-        for word in [
-            "vibration",
-            "vibrating",
-            "shaking",
-            "shake",
+    # Brake vibration
+    if contains_any(
+        text,
+        [
+            "brake vibration",
+            "vibration when braking",
+            "vibrating when braking",
+            "shaking when braking",
             "judder",
             "juddering",
-        ]
+        ],
     ):
-        return {
-            "problem": "Possible brake rotor or brake-system vibration",
-            "explanation": (
+        return result(
+            "Possible brake rotor or brake-system vibration",
+            (
                 "Vibration or shaking while braking can be associated "
-                "with brake rotor condition, uneven brake surfaces, "
-                "brake components, or other wheel and suspension issues."
+                "with brake-rotor condition, uneven brake surfaces, "
+                "brake components, or related wheel and suspension issues."
             ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the brake rotors, pads, wheels, and related "
+            "medium",
+            (
+                "Have the brake pads, rotors, wheels, and related "
                 "components inspected."
             ),
-        }
+        )
 
-    # -----------------------------------------------------
     # Pulling
-    # -----------------------------------------------------
-
-    if any(
-        phrase in text
-        for phrase in [
-            "pulling",
-            "pulls to the left",
-            "pulls to the right",
-            "pull left",
-            "pull right",
-            "car pulls",
-            "vehicle pulls",
-        ]
+    if contains_any(
+        text,
+        [
+            "pulling while braking",
+            "car pulls while braking",
+            "vehicle pulls while braking",
+            "pulls left while braking",
+            "pulls right while braking",
+        ],
     ):
-        return {
-            "problem": "Possible uneven braking or brake component issue",
-            "explanation": (
+        return result(
+            "Possible uneven braking or brake-component issue",
+            (
                 "A vehicle pulling to one side during braking can "
                 "be associated with uneven braking force, a brake "
-                "caliper or pad issue, tyre problems, or other "
-                "wheel and suspension components."
+                "caliper or pad issue, tyre condition, or wheel/suspension components."
             ),
-            "severity": "high",
-            "recommendation": (
+            "high",
+            (
                 "Have the braking system and related wheel components "
                 "inspected promptly."
             ),
-        }
-
-    # -----------------------------------------------------
-    # General brake noise
-    # -----------------------------------------------------
-
-    if any(
-        word in text
-        for word in [
-            "noise",
-            "sound",
-            "click",
-            "clicking",
-        ]
-    ):
-        return {
-            "problem": "Brake system noise",
-            "explanation": (
-                "A noise that occurs when the brake pedal is pressed "
-                "can be related to brake pads, rotors, brake hardware, "
-                "brake dust, or other braking system components."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the brake pads, rotors, and brake hardware "
-                "inspected. If the noise becomes grinding, braking "
-                "performance changes, or warning lights appear, "
-                "have the vehicle inspected promptly."
-            ),
-        }
-
-    return None
-
-
-# =========================================================
-# ENGINE DIAGNOSIS
-# =========================================================
-
-def diagnose_engine_issue(message_history):
-
-    text = " ".join(message_history).lower()
-
-    # -----------------------------------------------------
-    # Overheating + steam
-    # -----------------------------------------------------
-
-    if (
-        ("overheat" in text or "overheating" in text)
-        and "steam" in text
-    ):
-        return {
-            "problem": "Engine overheating with possible cooling-system issue",
-            "explanation": (
-                "Engine overheating accompanied by steam can indicate "
-                "coolant loss, a cooling-system problem, or another "
-                "condition causing excessive engine temperature."
-            ),
-            "severity": "high",
-            "recommendation": (
-                "Stop the vehicle safely and allow the engine to cool. "
-                "Do not open the radiator or coolant reservoir while "
-                "the engine is hot. Have the cooling system inspected."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # General overheating
-    # -----------------------------------------------------
-
-    if (
-        "overheat" in text
-        or "overheating" in text
-    ):
-        return {
-            "problem": "Engine overheating",
-            "explanation": (
-                "An overheating engine can result from coolant problems, "
-                "radiator issues, thermostat failure, cooling-fan problems, "
-                "water-pump problems, or other cooling-system faults."
-            ),
-            "severity": "high",
-            "recommendation": (
-                "Avoid continuing to drive if the temperature gauge "
-                "reaches the red zone. Allow the engine to cool safely "
-                "and have the cooling system inspected."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # White smoke
-    # -----------------------------------------------------
-
-    if "white smoke" in text:
-        return {
-            "problem": "Possible coolant entering the combustion system",
-            "explanation": (
-                "Persistent white smoke from the exhaust can be "
-                "associated with coolant entering the combustion "
-                "chamber, although other causes are possible."
-            ),
-            "severity": "high",
-            "recommendation": (
-                "Have the engine and cooling system inspected promptly."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # Blue smoke
-    # -----------------------------------------------------
-
-    if "blue smoke" in text:
-        return {
-            "problem": "Possible engine oil consumption",
-            "explanation": (
-                "Blue exhaust smoke can indicate that engine oil "
-                "is entering the combustion process."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the engine inspected for possible oil "
-                "consumption or internal engine issues."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # Black smoke
-    # -----------------------------------------------------
-
-    if "black smoke" in text:
-        return {
-            "problem": "Possible overly rich fuel mixture",
-            "explanation": (
-                "Black exhaust smoke can occur when the engine "
-                "is receiving more fuel than can be efficiently burned."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the fuel and engine-management systems inspected."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # Engine won't start
-    # -----------------------------------------------------
-
-    if any(
-        phrase in text
-        for phrase in [
-            "won't start",
-            "wont start",
-            "not start",
-            "doesn't start",
-            "doesnt start",
-        ]
-    ):
-        return {
-            "problem": "Engine starting problem",
-            "explanation": (
-                "A vehicle that does not start can have several possible "
-                "causes, including battery, starter, fuel, ignition, or "
-                "engine-management problems."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the starting, electrical, fuel, and ignition "
-                "systems inspected."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # Loss of power
-    # -----------------------------------------------------
-
-    if any(
-        phrase in text
-        for phrase in [
-            "losing power",
-            "loss of power",
-            "low power",
-            "poor acceleration",
-            "not accelerating",
-        ]
-    ):
-        return {
-            "problem": "Possible engine performance issue",
-            "explanation": (
-                "Loss of engine power can have several causes, including "
-                "fuel delivery, air intake, ignition, sensor, exhaust, "
-                "or other engine-management problems."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the engine-management, fuel, air-intake, ignition, "
-                "and exhaust systems checked."
-            ),
-        }
-
-    # -----------------------------------------------------
-    # Engine knocking
-    # -----------------------------------------------------
-
-    if any(
-        word in text
-        for word in [
-            "knocking",
-            "engine knock",
-        ]
-    ):
-        return {
-            "problem": "Possible engine knocking issue",
-            "explanation": (
-                "A knocking sound from the engine can have several "
-                "causes, ranging from combustion-related issues to "
-                "mechanical problems."
-            ),
-            "severity": "high",
-            "recommendation": (
-                "Avoid unnecessary driving and have the engine "
-                "inspected promptly."
-            ),
-        }
-
-    return None
-
-
-# =========================================================
-# BATTERY DIAGNOSIS
-# =========================================================
-
-def diagnose_battery_issue(message_history):
-
-    text = " ".join(message_history).lower()
-
-    if (
-        "battery" in text
-        and any(
-            word in text
-            for word in [
-                "click",
-                "clicking",
-            ]
         )
-    ):
-        return {
-            "problem": "Possible weak or discharged battery",
-            "explanation": (
-                "Repeated clicking when attempting to start the "
-                "vehicle can occur when the battery does not have "
-                "enough power to operate the starter properly."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the battery charge and condition checked. "
-                "The charging and starting systems may also need inspection."
-            ),
-        }
-
-    if (
-        "battery" in text
-        and any(
-            word in text
-            for word in [
-                "dim",
-                "dashboard lights dim",
-            ]
-        )
-    ):
-        return {
-            "problem": "Possible weak or discharged battery",
-            "explanation": (
-                "Very dim dashboard or vehicle lights can occur "
-                "when battery voltage is low or the electrical "
-                "system is not receiving sufficient power."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the battery and charging system tested."
-            ),
-        }
-
-    if "battery" in text:
-        return {
-            "problem": "Possible battery or charging-system issue",
-            "explanation": (
-                "Battery-related problems can be caused by a weak "
-                "battery, charging-system fault, loose connection, "
-                "or another electrical issue."
-            ),
-            "severity": "medium",
-            "recommendation": (
-                "Have the battery, terminals, and charging system tested."
-            ),
-        }
 
     return None
 
@@ -638,90 +217,1065 @@ def diagnose_battery_issue(message_history):
 # TYRE DIAGNOSIS
 # =========================================================
 
-def diagnose_tyre_issue(message_history):
+def diagnose_tyre_issue(messages):
 
-    text = " ".join(message_history).lower()
+    text = combined_text(messages)
 
-    if any(
-        word in text
-        for word in [
+    # Flat tyre / puncture
+    if contains_any(
+        text,
+        [
             "puncture",
             "flat tyre",
             "flat tire",
             "tyre is flat",
             "tire is flat",
-            "tyre pressure",
-            "tire pressure",
-        ]
+            "nail in tyre",
+            "nail in tire",
+        ],
     ):
-        return {
-            "problem": "Possible tyre pressure or puncture issue",
-            "explanation": (
+        return result(
+            "Possible tyre puncture or tyre damage",
+            (
                 "A flat tyre or rapidly falling tyre pressure can "
                 "be caused by a puncture, valve problem, or tyre damage."
             ),
-            "severity": "high",
-            "recommendation": (
-                "Avoid driving on a severely underinflated or flat "
-                "tyre. Inspect the tyre and repair or replace it."
+            "high",
+            (
+                "Avoid driving on a severely underinflated or flat tyre. "
+                "Inspect the tyre and repair or replace it as appropriate."
             ),
-        }
+        )
+
+    # Low pressure
+    if contains_any(
+        text,
+        [
+            "low tyre pressure",
+            "low tire pressure",
+            "tyre pressure",
+            "tire pressure",
+            "underinflated",
+            "under inflated",
+        ],
+    ):
+        return result(
+            "Possible low tyre pressure",
+            (
+                "Low tyre pressure can result from normal pressure loss, "
+                "a puncture, a leaking valve, temperature changes, or tyre damage."
+            ),
+            "medium",
+            (
+                "Check all tyre pressures against the vehicle manufacturer's "
+                "recommended values. Inspect for punctures or leaks if pressure "
+                "continues to fall."
+            ),
+        )
+
+    # Vibration
+    if contains_any(
+        text,
+        [
+            "tyre vibration",
+            "tire vibration",
+            "tyre vibrating",
+            "tyre shaking",
+            "wheel vibration",
+            "steering wheel vibration",
+        ],
+    ):
+        return result(
+            "Possible wheel balance, tyre, or alignment issue",
+            (
+                "Vehicle or steering-wheel vibration can be associated "
+                "with wheel imbalance, tyre damage, uneven tyre wear, "
+                "wheel condition, alignment, or suspension components."
+            ),
+            "medium",
+            (
+                "Have the tyres and wheels inspected and check wheel "
+                "balancing and alignment."
+            ),
+        )
+
+    # Uneven wear
+    if contains_any(
+        text,
+        [
+            "uneven tyre wear",
+            "uneven tire wear",
+            "uneven wear",
+            "worn tyre",
+            "worn tire",
+        ],
+    ):
+        return result(
+            "Possible tyre wear or wheel-alignment issue",
+            (
+                "Uneven tyre wear can be associated with incorrect "
+                "tyre pressure, wheel alignment, wheel imbalance, "
+                "suspension wear, or other wheel-related conditions."
+            ),
+            "medium",
+            (
+                "Inspect tyre pressure, tyre condition, wheel alignment, "
+                "wheel balance, and suspension components."
+            ),
+        )
+
+    # Pulling
+    if contains_any(
+        text,
+        [
+            "car pulls",
+            "vehicle pulls",
+            "pulls left",
+            "pulls right",
+            "pulling to the left",
+            "pulling to the right",
+        ],
+    ):
+        return result(
+            "Possible wheel alignment, tyre, or suspension issue",
+            (
+                "A vehicle consistently pulling to one side can be "
+                "associated with wheel alignment, tyre condition, "
+                "brake imbalance, or steering and suspension components."
+            ),
+            "medium",
+            (
+                "Have the tyres, wheel alignment, steering, suspension, "
+                "and brakes inspected."
+            ),
+        )
+
+    # Tyre noise
+    if contains_any(
+        text,
+        [
+            "tyre noise",
+            "tire noise",
+            "tyre sound",
+            "tire sound",
+            "humming noise",
+            "thumping noise",
+        ],
+    ):
+        return result(
+            "Possible tyre or wheel-related noise",
+            (
+                "Unusual tyre or wheel noise can be associated with "
+                "uneven tyre wear, wheel-bearing problems, tyre damage, "
+                "wheel imbalance, or other wheel-related conditions."
+            ),
+            "medium",
+            (
+                "Have the tyres, wheels, wheel bearings, and suspension "
+                "components inspected."
+            ),
+        )
 
     return None
 
 
 # =========================================================
-# STEERING / SUSPENSION DIAGNOSIS
+# ENGINE DIAGNOSIS
 # =========================================================
 
-def diagnose_steering_issue(message_history):
+def diagnose_engine_issue(messages):
 
-    text = " ".join(message_history).lower()
+    text = combined_text(messages)
 
-    if any(
-        phrase in text
-        for phrase in [
-            "steering wheel shaking",
+    # Overheating
+    if contains_any(
+        text,
+        [
+            "overheat",
+            "overheating",
+            "temperature gauge red",
+            "temperature in red",
+        ],
+    ):
+        return result(
+            "Engine overheating",
+            (
+                "Engine overheating can be caused by coolant loss, "
+                "radiator problems, thermostat failure, cooling-fan "
+                "problems, water-pump problems, or other cooling-system faults."
+            ),
+            "high",
+            (
+                "Avoid continuing to drive if the temperature reaches "
+                "the red zone. Allow the engine to cool safely and "
+                "have the cooling system inspected."
+            ),
+        )
+
+    # White smoke
+    if "white smoke" in text:
+        return result(
+            "Possible coolant entering the combustion system",
+            (
+                "Persistent white exhaust smoke can be associated "
+                "with coolant entering the combustion chamber, "
+                "although other causes are possible."
+            ),
+            "high",
+            (
+                "Have the engine and cooling system inspected promptly."
+            ),
+        )
+
+    # Blue smoke
+    if "blue smoke" in text:
+        return result(
+            "Possible engine oil consumption",
+            (
+                "Blue exhaust smoke can indicate that engine oil "
+                "is entering the combustion process."
+            ),
+            "medium",
+            (
+                "Have the engine inspected for possible oil-consumption "
+                "or internal-engine issues."
+            ),
+        )
+
+    # Black smoke
+    if "black smoke" in text:
+        return result(
+            "Possible overly rich fuel mixture",
+            (
+                "Black exhaust smoke can occur when the engine receives "
+                "more fuel than can be efficiently burned."
+            ),
+            "medium",
+            (
+                "Have the fuel and engine-management systems inspected."
+            ),
+        )
+
+    # Starting problem
+    if contains_any(
+        text,
+        [
+            "won't start",
+            "doesn't start",
+            "not starting",
+            "cannot start",
+            "can't start",
+        ],
+    ):
+        return result(
+            "Engine starting problem",
+            (
+                "A vehicle that does not start can have several possible "
+                "causes, including battery, starter, fuel, ignition, "
+                "immobilizer, or engine-management problems."
+            ),
+            "medium",
+            (
+                "Check the battery and starting system and have the "
+                "fuel, ignition, and engine-management systems inspected "
+                "if the problem persists."
+            ),
+        )
+
+    # Power loss
+    if contains_any(
+        text,
+        [
+            "losing power",
+            "loss of power",
+            "low power",
+            "poor acceleration",
+            "not accelerating",
+        ],
+    ):
+        return result(
+            "Possible engine performance issue",
+            (
+                "Loss of engine power can have several causes, including "
+                "fuel delivery, air intake, ignition, sensors, exhaust "
+                "restriction, or other engine-management problems."
+            ),
+            "medium",
+            (
+                "Have the engine-management, fuel, air-intake, ignition, "
+                "and exhaust systems checked."
+            ),
+        )
+
+    # Knocking
+    if contains_any(
+        text,
+        [
+            "engine knocking",
+            "engine knock",
+            "knocking from engine",
+        ],
+    ):
+        return result(
+            "Possible engine knocking issue",
+            (
+                "A knocking sound from the engine can have several "
+                "causes ranging from combustion-related issues to "
+                "mechanical problems."
+            ),
+            "high",
+            (
+                "Avoid unnecessary driving and have the engine inspected promptly."
+            ),
+        )
+
+    # Ticking
+    if contains_any(
+        text,
+        [
+            "engine ticking",
+            "ticking from engine",
+            "engine ticking noise",
+        ],
+    ):
+        return result(
+            "Possible engine mechanical or valvetrain noise",
+            (
+                "A ticking noise from the engine can have several "
+                "possible causes, including lubrication, valvetrain, "
+                "or other mechanical issues."
+            ),
+            "medium",
+            (
+                "Check the engine-oil level and have the engine inspected "
+                "if the noise persists or becomes louder."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# BATTERY / ELECTRICAL
+# =========================================================
+
+def diagnose_electrical_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "battery",
+            "clicking when starting",
+            "click when starting",
+            "dashboard lights dim",
+            "lights become dim",
+        ],
+    ):
+        return result(
+            "Possible weak battery or charging-system issue",
+            (
+                "A weak battery, charging-system problem, poor connection, "
+                "or starter-related issue can cause starting and electrical symptoms."
+            ),
+            "medium",
+            (
+                "Have the battery, battery terminals, charging system, "
+                "and starting system tested."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "alternator",
+            "charging light",
+            "battery light",
+            "battery warning light",
+        ],
+    ):
+        return result(
+            "Possible charging-system problem",
+            (
+                "A charging warning or alternator-related symptom can "
+                "indicate a problem with the alternator, belt, wiring, "
+                "or charging system."
+            ),
+            "high",
+            (
+                "Have the charging system inspected promptly. "
+                "Avoid unnecessary driving if the vehicle is losing electrical power."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "starter",
+            "starter motor",
+        ],
+    ):
+        return result(
+            "Possible starter-system problem",
+            (
+                "A starter-related problem can prevent the engine "
+                "from cranking or starting normally."
+            ),
+            "medium",
+            (
+                "Have the battery, starter motor, starter connections, "
+                "and starting circuit inspected."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# COOLING
+# =========================================================
+
+def diagnose_cooling_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "overheating",
+            "overheat",
+            "temperature gauge red",
+            "temperature high",
+        ],
+    ):
+        return result(
+            "Engine overheating / cooling-system issue",
+            (
+                "Overheating can be caused by coolant loss, radiator "
+                "problems, thermostat failure, cooling-fan problems, "
+                "water-pump problems, or other cooling-system faults."
+            ),
+            "high",
+            (
+                "Stop safely if the temperature reaches the red zone. "
+                "Do not open the cooling system while it is hot. "
+                "Have the cooling system inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "coolant leak",
+            "coolant leaking",
+            "coolant loss",
+        ],
+    ):
+        return result(
+            "Possible coolant leak",
+            (
+                "Coolant loss can occur because of a hose, radiator, "
+                "water-pump, thermostat housing, reservoir, or other "
+                "cooling-system problem."
+            ),
+            "high",
+            (
+                "Do not continue driving if coolant loss is significant "
+                "or the engine is overheating. Have the cooling system inspected."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# STEERING / SUSPENSION
+# =========================================================
+
+def diagnose_steering_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
             "steering wheel vibration",
             "steering vibration",
-        ]
+            "steering wheel shaking",
+        ],
     ):
-        return {
-            "problem": "Possible wheel, tyre, alignment, or suspension issue",
-            "explanation": (
+        return result(
+            "Possible wheel, tyre, alignment, or suspension issue",
+            (
                 "Steering-wheel vibration can be associated with tyre "
-                "balance, wheel condition, alignment, suspension "
-                "components, or other wheel-related problems."
+                "balance, wheel condition, alignment, suspension components, "
+                "or other wheel-related problems."
             ),
-            "severity": "medium",
-            "recommendation": (
+            "medium",
+            (
                 "Have the tyres, wheels, wheel balance, alignment, "
                 "and suspension components inspected."
             ),
-        }
+        )
 
-    if any(
-        phrase in text
-        for phrase in [
+    if contains_any(
+        text,
+        [
             "steering pulls",
             "steering pulling",
             "car pulls",
             "vehicle pulls",
-        ]
+            "pulling to the left",
+            "pulling to the right",
+        ],
     ):
-        return {
-            "problem": "Possible wheel alignment or steering issue",
-            "explanation": (
-                "A vehicle that consistently pulls to one side can "
-                "be associated with wheel alignment, tyre condition, "
-                "brake imbalance, or steering and suspension components."
+        return result(
+            "Possible wheel alignment or steering issue",
+            (
+                "A vehicle pulling to one side can be associated with "
+                "wheel alignment, tyre condition, brake imbalance, "
+                "or steering and suspension components."
             ),
-            "severity": "medium",
-            "recommendation": (
+            "medium",
+            (
                 "Have the tyres, alignment, steering, suspension, "
                 "and brakes inspected."
             ),
-        }
+        )
+
+    if contains_any(
+        text,
+        [
+            "suspension noise",
+            "noise over bumps",
+            "clunking over bumps",
+            "clunk over bumps",
+            "knocking over bumps",
+        ],
+    ):
+        return result(
+            "Possible suspension-component issue",
+            (
+                "Clunking or knocking over bumps can be associated "
+                "with worn suspension components, bushings, links, "
+                "shock absorbers, or related hardware."
+            ),
+            "medium",
+            (
+                "Have the suspension and steering components inspected."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# TRANSMISSION / CLUTCH
+# =========================================================
+
+def diagnose_transmission_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "clutch slipping",
+            "clutch is slipping",
+            "engine revs but car doesn't accelerate",
+            "engine revs but car does not accelerate",
+        ],
+    ):
+        return result(
+            "Possible clutch slipping",
+            (
+                "A clutch that slips can allow engine speed to increase "
+                "without a corresponding increase in vehicle speed."
+            ),
+            "medium",
+            (
+                "Have the clutch and transmission inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "hard to shift",
+            "difficulty shifting",
+            "gear difficult",
+            "gear is difficult",
+        ],
+    ):
+        return result(
+            "Possible gear-selection or clutch/transmission issue",
+            (
+                "Difficulty selecting gears can be associated with "
+                "clutch, transmission, linkage, fluid, or internal "
+                "gearbox problems."
+            ),
+            "medium",
+            (
+                "Have the clutch, transmission fluid where applicable, "
+                "gear linkage, and transmission inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "grinding gear",
+            "gear grinding",
+            "grinding when changing gear",
+        ],
+    ):
+        return result(
+            "Possible transmission or clutch problem",
+            (
+                "Grinding while changing gears can indicate a clutch, "
+                "synchronizer, gear, linkage, or other transmission issue."
+            ),
+            "high",
+            (
+                "Avoid forcing the gear lever and have the transmission "
+                "and clutch inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "jerking",
+            "jerking while changing gear",
+            "transmission jerking",
+            "gearbox jerking",
+        ],
+    ):
+        return result(
+            "Possible transmission or clutch-related issue",
+            (
+                "Jerking during gear changes can have several causes, "
+                "including clutch, transmission, fluid, sensor, or control-system issues."
+            ),
+            "medium",
+            (
+                "Have the transmission and clutch system inspected."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# OIL
+# =========================================================
+
+def diagnose_oil_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "oil leak",
+            "oil leaking",
+            "oil puddle",
+            "oil under car",
+        ],
+    ):
+        return result(
+            "Possible engine-oil leak",
+            (
+                "An oil leak can come from seals, gaskets, the oil pan, "
+                "filter area, drain plug, or other engine components."
+            ),
+            "medium",
+            (
+                "Check the oil level and have the source of the leak "
+                "identified and repaired."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "oil warning",
+            "oil warning light",
+            "oil pressure light",
+            "oil pressure warning",
+        ],
+    ):
+        return result(
+            "Possible engine-oil pressure problem",
+            (
+                "An oil-pressure warning can indicate low oil level, "
+                "oil-pressure problems, lubrication-system issues, "
+                "or another engine fault."
+            ),
+            "critical",
+            (
+                "Stop the engine as soon as it is safe to do so and "
+                "have the vehicle inspected. Do not continue driving "
+                "with an active oil-pressure warning."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "burning oil",
+            "oil consumption",
+            "using too much oil",
+            "low oil",
+        ],
+    ):
+        return result(
+            "Possible excessive engine-oil consumption",
+            (
+                "Low or rapidly decreasing engine-oil level can result "
+                "from an external leak or internal oil consumption."
+            ),
+            "medium",
+            (
+                "Check the oil level and have the engine inspected "
+                "for leaks or excessive oil consumption."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# FUEL
+# =========================================================
+
+def diagnose_fuel_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "fuel leak",
+            "petrol leak",
+            "gasoline leak",
+            "diesel leak",
+            "fuel leaking",
+        ],
+    ):
+        return result(
+            "Possible fuel-system leak",
+            (
+                "A fuel leak can come from fuel lines, connections, "
+                "the tank, pump, injectors, or other fuel-system components."
+            ),
+            "critical",
+            (
+                "Avoid driving the vehicle and keep it away from "
+                "ignition sources. Have the fuel system inspected immediately."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "poor fuel economy",
+            "poor mileage",
+            "low mileage",
+            "high fuel consumption",
+            "using too much fuel",
+        ],
+    ):
+        return result(
+            "Possible fuel-efficiency issue",
+            (
+                "High fuel consumption can be associated with tyre pressure, "
+                "driving conditions, engine tuning, sensors, injectors, "
+                "air intake, or other vehicle systems."
+            ),
+            "medium",
+            (
+                "Check tyre pressure and have the engine, fuel system, "
+                "air intake, and sensors inspected if the problem persists."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# AC
+# =========================================================
+
+def diagnose_ac_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "ac not cooling",
+            "ac not cold",
+            "air conditioner not cooling",
+            "air conditioning not cooling",
+            "warm air from ac",
+            "hot air from ac",
+        ],
+    ):
+        return result(
+            "Possible air-conditioning cooling-system issue",
+            (
+                "An AC system that does not cool properly can have causes "
+                "including low refrigerant, compressor problems, condenser "
+                "issues, airflow restrictions, or electrical/control faults."
+            ),
+            "medium",
+            (
+                "Have the AC system, refrigerant level, compressor, "
+                "condenser, and airflow checked."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "weak airflow",
+            "low airflow",
+            "ac airflow weak",
+        ],
+    ):
+        return result(
+            "Possible AC airflow restriction or blower issue",
+            (
+                "Weak airflow can be associated with a clogged cabin filter, "
+                "blower problem, airflow restriction, or HVAC control issue."
+            ),
+            "medium",
+            (
+                "Check the cabin air filter and have the blower and HVAC "
+                "airflow system inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "bad smell from ac",
+            "bad smell from air conditioner",
+            "ac smells",
+            "ac smell",
+        ],
+    ):
+        return result(
+            "Possible HVAC/cabin-air contamination issue",
+            (
+                "A persistent unpleasant smell from the AC can be associated "
+                "with a dirty cabin filter, moisture, or microbial growth "
+                "in the HVAC system."
+            ),
+            "low",
+            (
+                "Have the cabin filter and HVAC system inspected and cleaned."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# EXHAUST
+# =========================================================
+
+def diagnose_exhaust_issue(messages):
+
+    text = combined_text(messages)
+
+    if "white smoke" in text:
+        return result(
+            "Possible coolant entering the combustion system",
+            (
+                "Persistent white exhaust smoke can be associated "
+                "with coolant entering the combustion chamber."
+            ),
+            "high",
+            (
+                "Have the engine and cooling system inspected promptly."
+            ),
+        )
+
+    if "blue smoke" in text:
+        return result(
+            "Possible engine-oil burning",
+            (
+                "Blue exhaust smoke can indicate that engine oil "
+                "is entering the combustion process."
+            ),
+            "medium",
+            (
+                "Have the engine inspected for possible oil consumption."
+            ),
+        )
+
+    if "black smoke" in text:
+        return result(
+            "Possible overly rich fuel mixture",
+            (
+                "Black exhaust smoke can occur when too much fuel "
+                "is being supplied relative to the available air."
+            ),
+            "medium",
+            (
+                "Have the fuel and engine-management systems inspected."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "exhaust noise",
+            "loud exhaust",
+            "exhaust loud",
+        ],
+    ):
+        return result(
+            "Possible exhaust-system issue",
+            (
+                "A suddenly louder exhaust can be associated with "
+                "a leak, damaged muffler, exhaust pipe, or other "
+                "exhaust-system component."
+            ),
+            "medium",
+            (
+                "Have the exhaust system inspected for leaks or damage."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# LIGHTS / WARNING LIGHTS
+# =========================================================
+
+def diagnose_lights_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "check engine light",
+            "check engine",
+        ],
+    ):
+        return result(
+            "Check-engine warning detected",
+            (
+                "A check-engine light indicates that the vehicle's "
+                "engine-management system has detected a fault."
+            ),
+            "medium",
+            (
+                "Have the vehicle scanned for diagnostic trouble codes "
+                "and inspect the cause before continuing normal use."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "abs light",
+            "abs warning",
+        ],
+    ):
+        return result(
+            "ABS warning detected",
+            (
+                "An ABS warning can indicate a fault in the anti-lock "
+                "braking system or one of its sensors/components."
+            ),
+            "high",
+            (
+                "Have the ABS system inspected promptly. Drive cautiously "
+                "and avoid unnecessary driving if braking behavior changes."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "headlight not working",
+            "headlights not working",
+            "headlight doesn't work",
+            "headlight does not work",
+        ],
+    ):
+        return result(
+            "Possible headlight electrical or bulb problem",
+            (
+                "A headlight that does not work can be caused by a bulb, "
+                "fuse, wiring, connector, switch, or control-system issue."
+            ),
+            "medium",
+            (
+                "Check the bulb and fuse where appropriate and have "
+                "the lighting circuit inspected if necessary."
+            ),
+        )
+
+    if contains_any(
+        text,
+        [
+            "light flickering",
+            "lights flickering",
+            "headlight flickering",
+        ],
+    ):
+        return result(
+            "Possible electrical charging or connection issue",
+            (
+                "Flickering lights can be associated with poor electrical "
+                "connections, charging-system problems, wiring, or control components."
+            ),
+            "medium",
+            (
+                "Have the battery, alternator, wiring, and lighting circuits inspected."
+            ),
+        )
+
+    return None
+
+
+# =========================================================
+# HORN
+# =========================================================
+
+def diagnose_horn_issue(messages):
+
+    text = combined_text(messages)
+
+    if contains_any(
+        text,
+        [
+            "horn not working",
+            "horn doesn't work",
+            "horn does not work",
+            "horn silent",
+        ],
+    ):
+        return result(
+            "Possible horn electrical problem",
+            (
+                "A horn that does not work can be caused by the horn unit, "
+                "fuse, relay, wiring, switch, or related electrical components."
+            ),
+            "medium",
+            (
+                "Have the horn, fuse, relay, wiring, and steering-wheel "
+                "switch circuit inspected."
+            ),
+        )
 
     return None
 
@@ -731,84 +1285,257 @@ def diagnose_steering_issue(message_history):
 # =========================================================
 
 def diagnose(message_history):
-    """
-    Diagnose the most recent vehicle problem.
-    """
 
-    # Get only the context belonging to the latest problem.
-    problem_context = get_latest_problem_context(message_history)
+    messages = normalize_history(message_history)
 
-    if not problem_context:
+    if not messages:
         return None
 
-    text = " ".join(problem_context).lower()
+    text = combined_text(messages)
 
     # -----------------------------------------------------
-    # IMPORTANT:
-    # Check the subsystem that is actually present in the
-    # latest problem.
-    # -----------------------------------------------------
-
     # Brake
-    if "brake" in text:
-        result = diagnose_brake_issue(problem_context)
+    # -----------------------------------------------------
 
-        if result:
-            return result
-
-    # Engine
-    if any(
-        keyword in text
-        for keyword in [
-            "engine",
-            "overheat",
-            "overheating",
-            "steam",
-            "coolant",
-            "smoke",
-        ]
+    if contains_any(
+        text,
+        [
+            "brake",
+            "braking",
+            "brake pedal",
+        ],
     ):
-        result = diagnose_engine_issue(problem_context)
+        result_data = diagnose_brake_issue(messages)
 
-        if result:
-            return result
+        if result_data:
+            return result_data
 
-    # Battery
-    if "battery" in text:
-        result = diagnose_battery_issue(problem_context)
+    # -----------------------------------------------------
+    # Tyre / wheel
+    # -----------------------------------------------------
 
-        if result:
-            return result
-
-    # Tyre
-    if any(
-        keyword in text
-        for keyword in [
+    if contains_any(
+        text,
+        [
             "tyre",
             "tire",
             "puncture",
             "flat tyre",
             "flat tire",
-        ]
+            "wheel",
+            "rim",
+        ],
     ):
-        result = diagnose_tyre_issue(problem_context)
+        result_data = diagnose_tyre_issue(messages)
 
-        if result:
-            return result
+        if result_data:
+            return result_data
 
+    # -----------------------------------------------------
+    # Cooling / overheating
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "overheat",
+            "overheating",
+            "coolant",
+            "radiator",
+            "thermostat",
+            "water pump",
+        ],
+    ):
+        result_data = diagnose_cooling_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Engine
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "engine",
+            "motor",
+            "losing power",
+            "loss of power",
+            "knocking",
+            "ticking",
+            "won't start",
+            "doesn't start",
+        ],
+    ):
+        result_data = diagnose_engine_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Electrical
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "battery",
+            "alternator",
+            "starter",
+            "electrical",
+            "fuse",
+            "wiring",
+        ],
+    ):
+        result_data = diagnose_electrical_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
     # Steering / suspension
-    if any(
-        keyword in text
-        for keyword in [
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
             "steering",
             "suspension",
             "shock absorber",
-        ]
+            "strut",
+            "pulling",
+        ],
     ):
-        result = diagnose_steering_issue(problem_context)
+        result_data = diagnose_steering_issue(messages)
 
-        if result:
-            return result
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Transmission / clutch
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "clutch",
+            "gearbox",
+            "transmission",
+            "gear",
+        ],
+    ):
+        result_data = diagnose_transmission_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Oil
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "oil",
+            "engine oil",
+        ],
+    ):
+        result_data = diagnose_oil_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Fuel
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "fuel",
+            "petrol",
+            "gasoline",
+            "diesel",
+            "injector",
+        ],
+    ):
+        result_data = diagnose_fuel_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # AC
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "ac",
+            "a/c",
+            "air conditioner",
+            "air conditioning",
+            "heater",
+        ],
+    ):
+        result_data = diagnose_ac_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Exhaust
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "smoke",
+            "exhaust",
+            "muffler",
+            "catalytic",
+        ],
+    ):
+        result_data = diagnose_exhaust_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Lights
+    # -----------------------------------------------------
+
+    if contains_any(
+        text,
+        [
+            "headlight",
+            "headlights",
+            "tail light",
+            "indicator",
+            "turn signal",
+            "warning light",
+            "check engine",
+            "abs light",
+        ],
+    ):
+        result_data = diagnose_lights_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Horn
+    # -----------------------------------------------------
+
+    if "horn" in text:
+        result_data = diagnose_horn_issue(messages)
+
+        if result_data:
+            return result_data
+
+    # -----------------------------------------------------
+    # Nothing specific
+    # -----------------------------------------------------
 
     return None
-

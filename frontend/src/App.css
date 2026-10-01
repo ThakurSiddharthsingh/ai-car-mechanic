@@ -26,7 +26,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+input {
   font: inherit;
 }
 
@@ -278,6 +279,129 @@ button {
   font-size: 12px;
 
   border-top: 1px solid #edf0f4;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   AUDIO MESSAGE
+========================================================= */
+
+.audio-message {
+  width: min(100%, 360px);
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 14px;
+}
+
+.media-icon {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eef4ff;
+
+  font-size: 20px;
+}
+
+.media-content {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.media-name {
+  color: #374151;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.uploaded-audio {
+  display: block;
+
+  width: 100%;
+
+  height: 38px;
+}
+
+
+/* =========================================================
+   VIDEO MESSAGE
+========================================================= */
+
+.video-message {
+  width: min(100%, 400px);
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+}
+
+.uploaded-video {
+  display: block;
+
+  width: 100%;
+
+  max-height: 300px;
+
+  object-fit: contain;
+
+  background: #000;
+}
+
+.video-name {
+  padding: 9px 10px;
+
+  color: #6b7280;
+
+  font-size: 12px;
+
+  border-top: 1px solid #edf0f4;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 
@@ -677,6 +801,34 @@ button {
 
 
 /* =========================================================
+   MOBILE MEDIA
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .media-message {
+    max-width: 280px;
+  }
+
+  .audio-message {
+    max-width: 280px;
+  }
+
+  .uploaded-audio {
+    width: 100%;
+  }
+
+  .video-message {
+    max-width: 300px;
+  }
+
+  .uploaded-video {
+    max-height: 220px;
+  }
+}
+
+
+/* =========================================================
    MOBILE
 ========================================================= */
 
@@ -726,6 +878,14 @@ button {
     max-width: 260px;
   }
 
+  .audio-message {
+    max-width: 280px;
+  }
+
+  .video-message {
+    max-width: 300px;
+  }
+
 }
 
 
@@ -759,6 +919,14 @@ button {
     padding: 11px 13px;
   }
 
+  .audio-message {
+    max-width: 250px;
+  }
+
+  .video-message {
+    max-width: 270px;
+  }
+
 }
 
 
@@ -768,11 +936,15 @@ button {
 
 .booking-modal-overlay {
   position: fixed;
+
   inset: 0;
+
   z-index: 1000;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   padding: 20px;
@@ -789,6 +961,7 @@ button {
 
 .booking-modal {
   width: min(100%, 520px);
+
   max-height: 90vh;
 
   overflow-y: auto;
@@ -807,15 +980,23 @@ button {
 
 
 @keyframes bookingModalAppear {
+
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+
+    transform:
+      translateY(10px)
+      scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+
+    transform:
+      translateY(0)
+      scale(1);
   }
+
 }
 
 
@@ -871,6 +1052,7 @@ button {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border: none;
@@ -894,6 +1076,7 @@ button {
 
 .booking-close-button:disabled {
   opacity: 0.5;
+
   cursor: not-allowed;
 }
 
@@ -933,6 +1116,7 @@ button {
 
 .form-group input {
   width: 100%;
+
   height: 44px;
 
   padding: 0 12px;
@@ -1075,6 +1259,7 @@ button {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border-radius: 50%;
@@ -1218,6 +1403,7 @@ button {
 ========================================================= */
 
 @media (max-width: 600px) {
+
   .booking-modal-overlay {
     align-items: flex-end;
 
@@ -1246,4 +1432,5 @@ button {
   .booking-submit-button {
     width: 100%;
   }
+
 }

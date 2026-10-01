@@ -172,7 +172,31 @@ function App() {
   };
 
   // =====================================================
-  // IMAGE UPLOAD
+  // MEDIA TYPE DETECTION
+  // =====================================================
+
+  const getMediaType = (file) => {
+    if (file.type.startsWith("image/")) {
+      return "image";
+    }
+
+    if (file.type.startsWith("audio/")) {
+      return "audio";
+    }
+
+    if (file.type.startsWith("video/")) {
+      return "video";
+    }
+
+    return null;
+  };
+
+  // =====================================================
+  // MEDIA UPLOAD
+  // Supports:
+  // IMAGE
+  // AUDIO
+  // VIDEO
   // =====================================================
 
   const handleFileChange = async (event) => {
@@ -193,18 +217,51 @@ function App() {
       return;
     }
 
-    // Make sure the selected file is an image
-    if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+    // =================================================
+    // DETERMINE MEDIA TYPE
+    // =================================================
+
+    const mediaType = getMediaType(file);
+
+    if (!mediaType) {
+      alert(
+        "Please select an image, audio, or video file."
+      );
+
       event.target.value = "";
       return;
     }
 
-    // Maximum image size = 10 MB
-    const maxSize = 10 * 1024 * 1024;
+    // =================================================
+    // MAX FILE SIZE
+    //
+    // 10 MB for images
+    // 25 MB for audio
+    // 50 MB for video
+    // =================================================
+
+    let maxSize;
+    let maxSizeText;
+
+    if (mediaType === "image") {
+      maxSize = 10 * 1024 * 1024;
+      maxSizeText = "10 MB";
+    } else if (mediaType === "audio") {
+      maxSize = 25 * 1024 * 1024;
+      maxSizeText = "25 MB";
+    } else {
+      maxSize = 50 * 1024 * 1024;
+      maxSizeText = "50 MB";
+    }
 
     if (file.size > maxSize) {
-      alert("Image must be smaller than 10 MB.");
+      alert(
+        `${
+          mediaType.charAt(0).toUpperCase() +
+          mediaType.slice(1)
+        } must be smaller than ${maxSizeText}.`
+      );
+
       event.target.value = "";
       return;
     }
@@ -214,6 +271,10 @@ function App() {
     try {
       const formData = new FormData();
 
+      // =================================================
+      // FORM DATA
+      // =================================================
+
       formData.append(
         "conversation_id",
         conversationId
@@ -221,13 +282,17 @@ function App() {
 
       formData.append(
         "media_type",
-        "image"
+        mediaType
       );
 
       formData.append(
         "file",
         file
       );
+
+      // =================================================
+      // UPLOAD TO DJANGO
+      // =================================================
 
       const response = await fetch(
         `${API_URL}/api/upload/`,
@@ -241,40 +306,64 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Image upload failed."
+          data.error ||
+            `${mediaType} upload failed.`
         );
       }
 
-      // Django returns:
-      // /media/uploads/example.jpg
+      // =================================================
+      // BUILD MEDIA URL
+      // =================================================
 
-      const imageUrl = `${API_URL}${data.file_url}`;
+      const mediaUrl = data.file_url
+        ? data.file_url.startsWith("http")
+          ? data.file_url
+          : `${API_URL}${data.file_url}`
+        : null;
 
-      // Display uploaded image inside chat
+      if (!mediaUrl) {
+        throw new Error(
+          "Upload succeeded but the server did not return a file URL."
+        );
+      }
+
+      // =================================================
+      // DISPLAY MEDIA INSIDE CHAT
+      // =================================================
+
       setMessages((previousMessages) => [
         ...previousMessages,
         {
           id: Date.now(),
           sender: "user",
-          type: "image",
+          type: mediaType,
           text: file.name,
-          imageUrl: imageUrl,
+          mediaUrl: mediaUrl,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
         },
       ]);
 
       console.log(
-        "Image uploaded successfully:",
+        `${mediaType} uploaded successfully:`,
         data
       );
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error(
+        "Media upload error:",
+        error
+      );
 
       setMessages((previousMessages) => [
         ...previousMessages,
         {
           id: Date.now(),
           sender: "bot",
-          text: `Image upload failed: ${error.message}`,
+          text: `${mediaType.charAt(0).toUpperCase() +
+            mediaType.slice(1)} upload failed: ${
+            error.message
+          }`,
         },
       ]);
     } finally {
@@ -307,7 +396,6 @@ function App() {
         `${API_URL}/api/diagnosis/`,
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
@@ -322,7 +410,8 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Unable to generate diagnosis."
+          data.error ||
+            "Unable to generate diagnosis."
         );
       }
 
@@ -359,10 +448,9 @@ function App() {
         },
       ]);
 
-      // Diagnosis has now been generated.
+      // Diagnosis has now been generated
       setDiagnosisGenerated(true);
       setCanDiagnose(false);
-
     } catch (error) {
       console.error(
         "Diagnosis API error:",
@@ -401,7 +489,10 @@ function App() {
 
   const openBookingForm = () => {
     if (!conversationId) {
-      alert("Please start a conversation first.");
+      alert(
+        "Please start a conversation first."
+      );
+
       return;
     }
 
@@ -409,6 +500,7 @@ function App() {
       alert(
         "Please get a diagnosis before booking a mechanic."
       );
+
       return;
     }
 
@@ -447,7 +539,10 @@ function App() {
       return;
     }
 
-    // Basic validation
+    // =================================================
+    // BASIC VALIDATION
+    // =================================================
+
     if (
       !bookingForm.customer_name.trim() ||
       !bookingForm.phone.trim() ||
@@ -456,15 +551,29 @@ function App() {
       !bookingForm.preferred_date ||
       !bookingForm.preferred_time
     ) {
-      alert("Please fill in all booking fields.");
+      alert(
+        "Please fill in all booking fields."
+      );
+
       return;
     }
 
-    // Basic phone validation
-    const phonePattern = /^[0-9+\-\s()]{10,20}$/;
+    // =================================================
+    // PHONE VALIDATION
+    // =================================================
 
-    if (!phonePattern.test(bookingForm.phone.trim())) {
-      alert("Please enter a valid phone number.");
+    const phonePattern =
+      /^[0-9+\-\s()]{10,20}$/;
+
+    if (
+      !phonePattern.test(
+        bookingForm.phone.trim()
+      )
+    ) {
+      alert(
+        "Please enter a valid phone number."
+      );
+
       return;
     }
 
@@ -510,8 +619,10 @@ function App() {
           data
         );
 
-        // Handle Django REST Framework
-        // validation errors properly.
+        // =================================================
+        // HANDLE DRF VALIDATION ERRORS
+        // =================================================
+
         let errorMessage =
           "Unable to create booking.";
 
@@ -519,7 +630,9 @@ function App() {
           errorMessage = data.detail;
         } else if (data.error) {
           errorMessage = data.error;
-        } else if (typeof data === "object") {
+        } else if (
+          typeof data === "object"
+        ) {
           const validationMessages = [];
 
           Object.entries(data).forEach(
@@ -528,7 +641,9 @@ function App() {
                 validationMessages.push(
                   `${field}: ${errors.join(", ")}`
                 );
-              } else if (typeof errors === "string") {
+              } else if (
+                typeof errors === "string"
+              ) {
                 validationMessages.push(
                   `${field}: ${errors}`
                 );
@@ -536,7 +651,9 @@ function App() {
             }
           );
 
-          if (validationMessages.length > 0) {
+          if (
+            validationMessages.length > 0
+          ) {
             errorMessage =
               validationMessages.join("\n");
           }
@@ -550,18 +667,7 @@ function App() {
         data
       );
 
-      /*
-        Expected backend response:
-
-        {
-          booking_id: 1,
-          status: "pending",
-          booking: {...}
-        }
-      */
-
       setBookingResult(data);
-
     } catch (error) {
       console.error(
         "Booking error:",
@@ -574,6 +680,88 @@ function App() {
     } finally {
       setBookingLoading(false);
     }
+  };
+
+  // =====================================================
+  // RENDER MEDIA MESSAGE
+  // =====================================================
+
+  const renderMediaMessage = (message) => {
+    // =================================================
+    // IMAGE
+    // =================================================
+
+    if (message.type === "image") {
+      return (
+        <div className="image-message">
+          <img
+            src={message.mediaUrl}
+            alt={message.fileName || "Uploaded car image"}
+            className="uploaded-image"
+          />
+
+          <div className="image-name">
+            {message.fileName || message.text}
+          </div>
+        </div>
+      );
+    }
+
+    // =================================================
+    // AUDIO
+    // =================================================
+
+    if (message.type === "audio") {
+      return (
+        <div className="media-message audio-message">
+          <div className="media-icon">
+            🎵
+          </div>
+
+          <div className="media-content">
+            <div className="media-name">
+              {message.fileName || message.text}
+            </div>
+
+            <audio
+              controls
+              preload="metadata"
+              src={message.mediaUrl}
+              className="uploaded-audio"
+            >
+              Your browser does not support
+              audio playback.
+            </audio>
+          </div>
+        </div>
+      );
+    }
+
+    // =================================================
+    // VIDEO
+    // =================================================
+
+    if (message.type === "video") {
+      return (
+        <div className="video-message">
+          <video
+            controls
+            preload="metadata"
+            src={message.mediaUrl}
+            className="uploaded-video"
+          >
+            Your browser does not support
+            video playback.
+          </video>
+
+          <div className="video-name">
+            {message.fileName || message.text}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   // =====================================================
@@ -610,7 +798,6 @@ function App() {
 
       </header>
 
-
       {/* =================================================
           CHAT
       ================================================= */}
@@ -634,7 +821,6 @@ function App() {
                 </div>
               )}
 
-
               <div className="message-content">
 
                 {/* =====================================
@@ -647,29 +833,16 @@ function App() {
                   </div>
                 )}
 
-
                 {/* =====================================
-                    IMAGE MESSAGE
+                    IMAGE / AUDIO / VIDEO
                 ===================================== */}
 
-                {message.type === "image" && (
-
-                  <div className="image-message">
-
-                    <img
-                      src={message.imageUrl}
-                      alt={message.text}
-                      className="uploaded-image"
-                    />
-
-                    <div className="image-name">
-                      {message.text}
-                    </div>
-
-                  </div>
-
-                )}
-
+                {[
+                  "image",
+                  "audio",
+                  "video",
+                ].includes(message.type) &&
+                  renderMediaMessage(message)}
 
                 {/* =====================================
                     DIAGNOSIS CARD
@@ -697,7 +870,6 @@ function App() {
 
                     </div>
 
-
                     {/* PROBLEM */}
 
                     <div className="diagnosis-section">
@@ -711,7 +883,6 @@ function App() {
                       </p>
 
                     </div>
-
 
                     {/* EXPLANATION */}
 
@@ -727,7 +898,6 @@ function App() {
 
                     </div>
 
-
                     {/* SEVERITY */}
 
                     <div className="diagnosis-section">
@@ -739,18 +909,18 @@ function App() {
                       <span
                         className={`severity-badge ${
                           String(
-                            message.diagnosis.severity || ""
+                            message.diagnosis.severity ||
+                              ""
                           ).toLowerCase()
                         }`}
                       >
                         {String(
                           message.diagnosis.severity ||
-                          "Unknown"
+                            "Unknown"
                         ).toUpperCase()}
                       </span>
 
                     </div>
-
 
                     {/* RECOMMENDATION */}
 
@@ -772,7 +942,6 @@ function App() {
 
               </div>
 
-
               {/* USER AVATAR */}
 
               {message.sender === "user" && (
@@ -784,7 +953,6 @@ function App() {
             </div>
 
           ))}
-
 
           {/* =================================================
               CHAT LOADING
@@ -810,7 +978,6 @@ function App() {
 
           )}
 
-
           {/* =================================================
               UPLOAD LOADING
           ================================================= */}
@@ -826,7 +993,7 @@ function App() {
               <div className="message-content">
 
                 <div className="message-bubble typing">
-                  Uploading your image...
+                  Uploading your media...
                 </div>
 
               </div>
@@ -839,7 +1006,6 @@ function App() {
 
       </main>
 
-
       {/* =================================================
           INPUT AREA
       ================================================= */}
@@ -848,18 +1014,26 @@ function App() {
 
         <div className="input-wrapper">
 
-          {/* HIDDEN FILE INPUT */}
+          {/* =================================================
+              HIDDEN FILE INPUT
+
+              Supports:
+              IMAGE
+              AUDIO
+              VIDEO
+          ================================================= */}
 
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,audio/*,video/*"
             onChange={handleFileChange}
             className="hidden-file-input"
           />
 
-
-          {/* ATTACHMENT */}
+          {/* =================================================
+              ATTACHMENT BUTTON
+          ================================================= */}
 
           <button
             className="attachment-button"
@@ -870,13 +1044,14 @@ function App() {
               uploading ||
               diagnosisGenerated
             }
-            title="Upload car image"
+            title="Upload image, audio, or video"
           >
             📎
           </button>
 
-
-          {/* TEXT INPUT */}
+          {/* =================================================
+              TEXT INPUT
+          ================================================= */}
 
           <textarea
             value={input}
@@ -897,8 +1072,9 @@ function App() {
             }
           />
 
-
-          {/* SEND */}
+          {/* =================================================
+              SEND
+          ================================================= */}
 
           <button
             className="send-button"
@@ -918,10 +1094,10 @@ function App() {
 
         <p className="input-hint">
           Press Enter to send • Shift + Enter for a new line
+          • 📎 Image / Audio / Video
         </p>
 
       </div>
-
 
       {/* =================================================
           ACTION BUTTONS
@@ -948,7 +1124,6 @@ function App() {
             : "🔍 Get Diagnosis"}
         </button>
 
-
         {/* BOOK MECHANIC */}
 
         <button
@@ -965,7 +1140,6 @@ function App() {
 
       </div>
 
-
       {/* =================================================
           BOOKING MODAL
       ================================================= */}
@@ -975,11 +1149,14 @@ function App() {
         <div
           className="booking-modal-overlay"
           onMouseDown={(event) => {
+
             if (
-              event.target === event.currentTarget
+              event.target ===
+              event.currentTarget
             ) {
               closeBookingForm();
             }
+
           }}
         >
 
@@ -1020,7 +1197,6 @@ function App() {
 
                 </div>
 
-
                 {/* FORM */}
 
                 <form
@@ -1054,7 +1230,6 @@ function App() {
 
                   </div>
 
-
                   {/* PHONE */}
 
                   <div className="form-group">
@@ -1081,7 +1256,6 @@ function App() {
 
                   </div>
 
-
                   {/* VEHICLE */}
 
                   <div className="form-group">
@@ -1107,7 +1281,6 @@ function App() {
 
                   </div>
 
-
                   {/* SERVICE */}
 
                   <div className="form-group">
@@ -1132,7 +1305,6 @@ function App() {
                     />
 
                   </div>
-
 
                   {/* DATE + TIME */}
 
@@ -1165,7 +1337,6 @@ function App() {
 
                     </div>
 
-
                     <div className="form-group">
 
                       <label htmlFor="preferred_time">
@@ -1189,7 +1360,6 @@ function App() {
                     </div>
 
                   </div>
-
 
                   {/* ACTION BUTTONS */}
 
@@ -1241,7 +1411,6 @@ function App() {
                   submitted successfully.
                 </p>
 
-
                 <div className="booking-details">
 
                   {/* BOOKING ID */}
@@ -1261,7 +1430,6 @@ function App() {
 
                   </div>
 
-
                   {/* STATUS */}
 
                   <div className="booking-detail">
@@ -1280,7 +1448,6 @@ function App() {
 
                   </div>
 
-
                   {/* VEHICLE */}
 
                   <div className="booking-detail">
@@ -1294,7 +1461,6 @@ function App() {
                     </strong>
 
                   </div>
-
 
                   {/* SERVICE */}
 
@@ -1310,7 +1476,6 @@ function App() {
 
                   </div>
 
-
                   {/* DATE */}
 
                   <div className="booking-detail">
@@ -1324,7 +1489,6 @@ function App() {
                     </strong>
 
                   </div>
-
 
                   {/* TIME */}
 
@@ -1341,7 +1505,6 @@ function App() {
                   </div>
 
                 </div>
-
 
                 {/* DONE */}
 

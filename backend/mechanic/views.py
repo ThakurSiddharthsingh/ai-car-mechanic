@@ -79,11 +79,10 @@ def chat(request):
     # Get previous user messages
     # -----------------------------------------------------
 
-    previous_user_messages = list(
+    conversation_history = list(
         conversation.messages
-        .filter(sender="user")
         .exclude(id=user_message.id)
-        .values_list("message", flat=True)
+        .values("sender", "message")
     )
 
     # -----------------------------------------------------
@@ -92,7 +91,7 @@ def chat(request):
 
     result = generate_basic_response(
         message,
-        conversation_history=previous_user_messages,
+        conversation_history=conversation_history,
     )
 
     bot_response = result["response"]
